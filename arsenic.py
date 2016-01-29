@@ -50,6 +50,7 @@ ownerlist = oplist
 modlook = {}
 modules = config.get('main', 'mod').replace(' ','').split(',')
 
+mod_declare_syncmsg = {}
 mod_declare_privmsg = {}
 mod_declare_userjoin = {}
 
@@ -163,6 +164,26 @@ class Arsenic(irc.IRCClient):
         self.join(channel)
         del user
 
+    def syncmsg(self, cbuser, inchannel, outchannel, msg):
+        try:
+            self.lockerbox['%s%s'%(inchannel,outchannel)]
+        except:
+            self.lockerbox['%s%s'%(inchannel,outchannel)] = self.persist()
+
+        setattr(self, 'type', 'syncmsg')
+        setattr(self, 'message', msg)
+        setattr(self, 'user', cbuser)
+        setattr(self, 'incoming_channel', inchannel)
+        setattr(self, 'outgoing_channel', outchannel)
+        setattr(self, 'ver', VER)
+        setattr(self, 'store', self.save)
+        setattr(self, 'locker', self.lockerbox['%s%s'%(inchannel,outchannel)])
+         
+        for command in mod_declare_syncmsg:
+            modlook[
+                mod_declare_privmsg[command]].callback(
+                self)
+
     def userJoined(self, cbuser, cbchannel):
         setattr(self, 'type', 'userjoin')
         setattr(self, 'user', cbuser)
@@ -198,6 +219,7 @@ class Arsenic(irc.IRCClient):
         if channel in sync_channels:    #syncing
             u = user.split('!', 1)[0]
             self.msg(sync_channels[channel], '<%s> %s' % (u, msg))
+            syncmsg(self, user, channel, sync_channels[channel], msg)
 
         if command.startswith(key):
             com = command.split(key, 1)[1]
