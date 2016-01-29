@@ -181,7 +181,7 @@ class Arsenic(irc.IRCClient):
          
         for command in mod_declare_syncmsg:
             modlook[
-                mod_declare_privmsg[command]].callback(
+                mod_declare_syncmsg[command]].callback(
                 self)
 
     def userJoined(self, cbuser, cbchannel):
